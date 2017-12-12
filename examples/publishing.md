@@ -10,9 +10,7 @@ To store custom content in an ANS document in the Content API in a searchable ma
 * JSON editor
 * An active Arc account and basic auth credentials
 
-## Procedure
-
-### Accessing the APIs
+## Accessing the APIs
 
 All API calls to Arc go through an authentication layer on a single domain. This domain is derived from your organization's name. For example, if your organization's name is The Post, the API access domain might look like:
 
@@ -35,7 +33,7 @@ Note that the API access domain is available over HTTPS only.
 For brevity, the rest of this document will assume that these headers `-H "Content-Type: application/json" --user 2017-12:password` are present in every cURL example.
 
 
-### Creating your first document
+## Creating your first document
 
 Documents in the Content API adhere to ANS format. The complete syntactical rules for ANS documents are captured in the [ans-schema](https://github.com/washingtonpost/ans-schema) repository.
 
@@ -178,7 +176,7 @@ https://arcpublishing.atlassian.net/wiki/spaces/CA/pages/43188271/Story+API+v2+-
 
 
 
-### Searching for the document in Content API.
+## Searching for the document in Content API.
 
 The most recently edited version of a story is always available in the Content API. (This is sometimes referred to as the "unpublished" or "nonpublished" copy, even if the story has separately been published.)
 
@@ -203,7 +201,7 @@ There it is, with a bit more added metadata, but only by searching for nonpublis
 
 
 
-### Publishing a document
+## Publishing a document
 
 Story API doesn't just store the revisions as we update, it also controls the publishing state of the document.  Documents saved in Story API can be published by creating a *story edition*. A story __edition__ is a essentially a named pointer to a particular story __revision__ indicating which revision is considered to be the published version of a story.
 
@@ -238,7 +236,7 @@ The nonpublished document and the published document in Content API are differen
 More information on the Content API is available here: https://arcpublishing.atlassian.net/wiki/spaces/CA/pages/50928390/Content+API
 
 
-### Creating an Author
+## Creating an Author
 
 Most documents in the Content API have an associated author. An author is a reader-facing entity that represents the original human producer of the content. (E.g., a writer of a story, or the photographer of an image.)
 
@@ -361,7 +359,7 @@ The reference format in ANS looks like this:
 
 The document we created put a reference in the `credits.by` field in the document, indicating that this story is "by" this author. Any relationships are allowed, but the most commonly used are "by" and "photos_by". Note that each of these fields is an ordered list, so mutliple authors are possible. (Sub-authors, like "contributors" or "additional_reporting_by" are also possible, but not indexed or searchable in Content API.)
 
-### Organizing your document in your website with taxonomy
+## Organizing your document in your website with taxonomy
 
 Authors are one kind of reference, but there are several others. One of the most important is the relationship between the story and the rest of the website it lives in.
 
@@ -514,7 +512,7 @@ curl -X GET https://api.thepost.arcpublishing.com/content/v3/search/?q=Science
 Our query for "Science" matched our story document, because "Science" is the name of a section our story is in.
 
 
-### Adding an image
+## Adding an image
 
 Most articles aren't just text, they also include an image, sometimes more than one! To include an image in our document, we must first upload it to the Image API, also known as Anglerfish.
 
@@ -794,6 +792,7 @@ curl -X https://api.thepost.arcpublishing.com/url/v1/url' -d '{"_id":"TLAWPF3RHJ
 
 This links the relative url "/my-first-arc-document" to the story ID "TLAWPF3RHJAW5LWWJB2DHQXDT4". This url will be added to the document on subsequent updates and publishes.
 
+
 Let's publish the final revision of our document now to see the `canonical_url` appear.
 
 ```
@@ -810,5 +809,158 @@ curl -X GET 'https://api.thepost.arcpublishing.com/content/v3/stories?_id=TLAWPF
 {"_id":"TLAWPF3RHJAW5LWWJB2DHQXDT4","type":"story","version":"0.5.8","content_elements":[{"_id":"QOMQZYXMXVDEDIHROL2D3EUSHA","type":"text","content":"This document was created via a call to the Story API."},{"_id":"IA6RGMNIIVF6FCOFTQT22FFRJ4","type":"reference","referent":{"type":"image","id":"JXJTKHKE6NHH7ODZ5VYEIKQVQM","provider":""}},{"_id":"PP7ESJELPRCT5A2YJK74E67XDI","type":"text","content":"My favorite animal is the armadillo."}],"created_date":"2017-12-11T19:52:12.736Z","revision":{"revision_id":"AQXPF7XEGFCQJOZLM3JPO3UO7A","parent_id":"BWSCXT3Z7ZE2ZMMP54MYRF45TU","editions":["default"],"branch":"default","published":true},"last_updated_date":"2017-12-12T17:07:01.334Z","headlines":{"basic":"My First Arc Document, Updated"},"owner":{"id":"staging"},"display_date":"2017-12-11T20:53:20.825Z","credits":{"by":[{"_id":"engelg2","type":"author","version":"0.5.8","name":"Gregory Engel","description":"A developer at Arc Publishing","additional_properties":{"original":{"_id":"engelg2","name":"Gregory Engel","bio":"A developer at Arc Publishing"}}}]},"subheadlines":{"basic":"Created in Arc"},"first_publish_date":"2017-12-11T20:53:20.825Z","taxonomy":{"sites":[{"_id":"/science","type":"site","version":"0.5.8","name":"Science","path":"/science","parent_id":"/","additional_properties":{"original":{"_id":"/science","name":"Science","parent":"/","inactive":false,"order":100059}}},{"_id":"/science/animals","type":"site","version":"0.5.8","name":"Animals","path":"/science/animals","parent_id":"/science","additional_properties":{"original":{"_id":"/science/animals","name":"Animals","parent":"/science","inactive":false,"order":100069}}}]},"additional_properties":{"has_published_copy":true},"publish_date":"2017-12-12T17:48:43.578Z","canonical_url":"/my-first-arc-document","publishing":{"scheduled_operations":{"publish_edition":[],"unpublish_edition":[]}}}
 ```
 
+As you can see, our URL is now present in the published document.
 
-For more details on the URL Service, see: https://arcpublishing.atlassian.net/wiki/spaces/CA/pages/13338275/Url+Service
+
+## More About URLs
+
+Manually generating a new URL for each story can become both cumbersome and error-prone. As an alternative to the previous step, there is a way to have the URL API generate URLs for us based on the contents of an ANS document.
+
+1. Delete the previously generated URL
+
+```
+curl -X DELETE 'https://api.thepost.arcpublishing.com/url/v1/url?url=?url=/my-first-arc-document'
+
+{"_id":"/my-first-arc-document","content_id":"TLAWPF3RHJAW5LWWJB2DHQXDT4","created_date":"2017-12-12T17:48:33.556Z","last_updated_date":"2017-12-12T17:48:33.556Z"}
+```
+
+2. Update the story in the Story API
+
+```
+curl -X PUT 'https://api.thepost.arcpublishing.com/story/v2/story/TLAWPF3RHJAW5LWWJB2DHQXDT4' --data @/some/path/on/your/local/computer/my-first-arc-document.json
+```
+
+3. Fetch and save the denormalized story to your machine with the following:
+
+```
+curl -X GET 'https://api.thepost.arcpublishing.com/content/v3/stories?_id=TLAWPF3RHJAW5LWWJB2DHQXDT4&published=false' > /some/path/on/your/local/computer/denormalized.json
+```
+
+
+4. Edit and save the local denormalized.json to include this field:
+
+```
+  "publish_date": "2017-12-11T14:42:51-05:00"
+```
+
+5. Post the denormalized ANS body to the URL Service:
+
+```
+curl -X POST 'https://api.thepost.arcpublishing.com/url/v1/url --data@/some/path/on/your/local/computer/denormalized.json
+
+{"url":"/stories/science/2017/12/11/my-first-arc-document-updated","format":{"_id":"1499701818967","format":"stories%taxonomy.sites[0]._id%/%publish_date|year()%/%publish_date|month()%/%publish_date|day()%/%headlines.basic|slugify()%","priority":20,"criteria":{"type":"story"}}}
+```
+
+### What just happened?
+
+* `DELETE /url/v1/url` removed the link between the url and our document in Url Service we had previously created
+* `PUT /story/v2/story` updated the document in Story API and Content API, to ensure the old url was gone
+* `GET /content/v3/stories` downloaded the denormalized document (now without the `canonical_url` field)
+* `publish_date` was then stubbed on the ANS document as a temporary mock
+* `POST /url/v1/url` asked URL API to generate a `canonical_url` field from the other data in the document, in this case the `taxonomy.sites` and `publish_date` fields
+
+What fields does the URL API use to generate urls? Fortunately, the answer to that question is configurable. The details of the configuration rules in URL API are beyond the scope of this document. However, you can read about them, as well as the rest of the URL API at: https://arcpublishing.atlassian.net/wiki/spaces/CA/pages/13338275/Url+Service
+
+
+
+## Publishing revisited
+
+You may have noticed something odd during the previous publish step.  In the nonpublished edition of the story, the body of the story (represented in ANS as `content_elements`) looks like this:
+
+
+`https://api.thepost.arcpublishing.com/content/v3/stories?_id=TLAWPF3RHJAW5LWWJB2DHQXDT4&published=false`
+```json
+  "content_elements": [
+    {
+      "_id": "QOMQZYXMXVDEDIHROL2D3EUSHA",
+      "type": "text",
+      "content": "This document was created via a call to the Story API."
+    },
+    {
+      "_id": "JXJTKHKE6NHH7ODZ5VYEIKQVQM",
+      "additional_properties": {
+        "galleries": [],
+        "mime_type": "image/jpeg",
+        "originalUrl": "https://arc-anglerfish-staging-staging.s3.amazonaws.com/JXJTKHKE6NHH7ODZ5VYEIKQVQM.JPG",
+        "proxyUrl": "/photo/resize/F2zV-JyTwVOqeRD6oUEAJQlaD-4=/arc-anglerfish-staging-staging/JXJTKHKE6NHH7ODZ5VYEIKQVQM.JPG",
+        "published": false,
+        "resizeUrl": "http://anglerfish-staging-thumbor.internal.arc2.nile.works/F2zV-JyTwVOqeRD6oUEAJQlaD-4=/arc-anglerfish-staging-staging/JXJTKHKE6NHH7ODZ5VYEIKQVQM.JPG",
+        "version": 0
+      },
+      "created_date": "2017-12-12T16:44:07+00:00",
+      "height": 320,
+      "last_updated_date": "2017-12-12T16:44:07+00:00",
+      "licensable": false,
+      "owner": {
+        "id": "staging",
+        "name": "Organization Name Override Goes Here"
+      },
+      "type": "image",
+      "url": "https://arc-anglerfish-staging-staging.s3.amazonaws.com/JXJTKHKE6NHH7ODZ5VYEIKQVQM.JPG",
+      "version": "0.5.8",
+      "width": 480
+    },
+    {
+      "_id": "PP7ESJELPRCT5A2YJK74E67XDI",
+      "type": "text",
+      "content": "My favorite animal is the armadillo."
+    }
+  ]
+```
+
+But in the published edition of the story, we have this:
+
+`https://api.thepost.arcpublishing.com/content/v3/stories?_id=TLAWPF3RHJAW5LWWJB2DHQXDT4&published=true`
+```json
+
+  "content_elements": [
+    {
+      "_id": "QOMQZYXMXVDEDIHROL2D3EUSHA",
+      "type": "text",
+      "content": "This document was created via a call to the Story API."
+    },
+    {
+      "_id": "IA6RGMNIIVF6FCOFTQT22FFRJ4",
+      "type": "reference",
+      "referent": {
+        "type": "image",
+        "id": "JXJTKHKE6NHH7ODZ5VYEIKQVQM",
+        "provider": ""
+      }
+    },
+    {
+      "_id": "PP7ESJELPRCT5A2YJK74E67XDI",
+      "type": "text",
+      "content": "My favorite animal is the armadillo."
+    }
+  ]
+
+```
+
+
+The image we embedded in our story doesn't inflate at all in the published edition. The reason for this is that, in Arc, images have their own publish status *independent of the embedding story*. This means that images can be published or unpublished without manually updating every story that image ever appeared in. (Incidentally, the same is true for galleries and video.)
+
+This feature is convenient when you want to remove a photo everywhere, but it means we need to take one more step for our story to be truly finished -- we need to publish the image itself in the Image API.
+
+Retrieve the saved photo document:
+```
+curl -X GET https://api.thepost.arcpublishing.com/photo/v2/photos/JXJTKHKE6NHH7ODZ5VYEIKQVQM
+
+{"_id":"JXJTKHKE6NHH7ODZ5VYEIKQVQM","additional_properties":{"galleries":[],"mime_type":"image/jpeg","originalUrl":"https://arc-anglerfish-staging-staging.s3.amazonaws.com/JXJTKHKE6NHH7ODZ5VYEIKQVQM.JPG","proxyUrl":"/photo/resize/F2zV-JyTwVOqeRD6oUEAJQlaD-4=/arc-anglerfish-staging-staging/JXJTKHKE6NHH7ODZ5VYEIKQVQM.JPG","published":false,"resizeUrl":"http://anglerfish-staging-thumbor.internal.arc2.nile.works/F2zV-JyTwVOqeRD6oUEAJQlaD-4=/arc-anglerfish-staging-staging/JXJTKHKE6NHH7ODZ5VYEIKQVQM.JPG","version":0},"created_date":"2017-12-12T16:44:07+00:00","height":320,"last_updated_date":"2017-12-12T16:44:07+00:00","licensable":false,"owner":{"id":"staging","name":"Organization Name Override Goes Here"},"type":"image","url":"https://arc-anglerfish-staging-staging.s3.amazonaws.com/JXJTKHKE6NHH7ODZ5VYEIKQVQM.JPG","version":"0.5.8","width":480}
+```
+
+Change `additional_properties.published` to `true` and PUT the document back:
+```
+curl -X PUT https://api.thepost.arcpublishing.com/photo/v2/photos/JXJTKHKE6NHH7ODZ5VYEIKQVQM -d '{"_id":"JXJTKHKE6NHH7ODZ5VYEIKQVQM","additional_properties":{"galleries":[],"mime_type":"image/jpeg","originalUrl":"https://arc-anglerfish-staging-staging.s3.amazonaws.com/JXJTKHKE6NHH7ODZ5VYEIKQVQM.JPG","proxyUrl":"/photo/resize/F2zV-JyTwVOqeRD6oUEAJQlaD-4=/arc-anglerfish-staging-staging/JXJTKHKE6NHH7ODZ5VYEIKQVQM.JPG","published":true,"resizeUrl":"http://anglerfish-staging-thumbor.internal.arc2.nile.works/F2zV-JyTwVOqeRD6oUEAJQlaD-4=/arc-anglerfish-staging-staging/JXJTKHKE6NHH7ODZ5VYEIKQVQM.JPG","version":0},"created_date":"2017-12-12T16:44:07+00:00","height":320,"last_updated_date":"2017-12-12T16:44:07+00:00","licensable":false,"owner":{"id":"staging","name":"Organization Name Override Goes Here"},"type":"image","url":"https://arc-anglerfish-staging-staging.s3.amazonaws.com/JXJTKHKE6NHH7ODZ5VYEIKQVQM.JPG","version":"0.5.8","width":480}'
+
+{"_id":"JXJTKHKE6NHH7ODZ5VYEIKQVQM","additional_properties":{"galleries":[],"mime_type":"image/jpeg","originalUrl":"https://arc-anglerfish-staging-staging.s3.amazonaws.com/public/JXJTKHKE6NHH7ODZ5VYEIKQVQM.JPG","published":true,"version":1},"created_date":"2017-12-12T16:44:07+00:00","height":320,"last_updated_date":"2017-12-12T20:40:36+00:00","licensable":false,"owner":{"id":"staging","name":"Organization Name Override Goes Here"},"type":"image","url":"https://arc-anglerfish-staging-staging.s3.amazonaws.com/public/JXJTKHKE6NHH7ODZ5VYEIKQVQM.JPG","version":"0.5.8","width":480}
+```
+
+Now if we check back in with our published story, we should see the inflated image present:
+
+```
+curl -X GET 'https://api.thepost.arcpublishing.com/content/v3/stories?_id=TLAWPF3RHJAW5LWWJB2DHQXDT4&published=true'
+
+{"_id":"TLAWPF3RHJAW5LWWJB2DHQXDT4","type":"story","version":"0.5.8","content_elements":[{"_id":"QOMQZYXMXVDEDIHROL2D3EUSHA","type":"text","content":"This document was created via a call to the Story API."},{"_id":"JXJTKHKE6NHH7ODZ5VYEIKQVQM","additional_properties":{"galleries":[],"mime_type":"image/jpeg","originalUrl":"https://arc-anglerfish-staging-staging.s3.amazonaws.com/public/JXJTKHKE6NHH7ODZ5VYEIKQVQM.JPG","published":true,"version":1},"created_date":"2017-12-12T16:44:07+00:00","height":320,"last_updated_date":"2017-12-12T20:39:45+00:00","licensable":false,"owner":{"id":"staging","name":"Organization Name Override Goes Here"},"type":"image","url":"https://arc-anglerfish-staging-staging.s3.amazonaws.com/public/JXJTKHKE6NHH7ODZ5VYEIKQVQM.JPG","version":"0.5.8","width":480},{"_id":"PP7ESJELPRCT5A2YJK74E67XDI","type":"text","content":"My favorite animal is the armadillo."}],"created_date":"2017-12-11T19:52:12.736Z","revision":{"revision_id":"AQXPF7XEGFCQJOZLM3JPO3UO7A","parent_id":"BWSCXT3Z7ZE2ZMMP54MYRF45TU","editions":["default"],"branch":"default","published":true},"last_updated_date":"2017-12-12T17:07:01.334Z","headlines":{"basic":"My First Arc Document, Updated"},"owner":{"id":"staging"},"display_date":"2017-12-11T20:53:20.825Z","credits":{"by":[{"_id":"engelg2","type":"author","version":"0.5.8","name":"Gregory Engel","description":"A developer at Arc Publishing","additional_properties":{"original":{"_id":"engelg2","name":"Gregory Engel","bio":"A developer at Arc Publishing"}}}]},"subheadlines":{"basic":"Created in Arc"},"first_publish_date":"2017-12-11T20:53:20.825Z","taxonomy":{"sites":[{"_id":"/science","type":"site","version":"0.5.8","name":"Science","path":"/science","parent_id":"/","additional_properties":{"original":{"_id":"/science","name":"Science","parent":"/","inactive":false,"order":100059}}},{"_id":"/science/animals","type":"site","version":"0.5.8","name":"Animals","path":"/science/animals","parent_id":"/science","additional_properties":{"original":{"_id":"/science/animals","name":"Animals","parent":"/science","inactive":false,"order":100069}}}]},"additional_properties":{"has_published_copy":true},"publish_date":"2017-12-12T17:48:43.578Z","canonical_url":"/my-first-arc-document","publishing":{"scheduled_operations":{"publish_edition":[],"unpublish_edition":[]}}}
+```
+ ...and indeed we do!
