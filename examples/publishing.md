@@ -360,3 +360,452 @@ The reference format in ANS looks like this:
 * `referent.provider` is unused here
 
 The document we created put a reference in the `credits.by` field in the document, indicating that this story is "by" this author. Any relationships are allowed, but the most commonly used are "by" and "photos_by". Note that each of these fields is an ordered list, so mutliple authors are possible. (Sub-authors, like "contributors" or "additional_reporting_by" are also possible, but not indexed or searchable in Content API.)
+
+### Organizing your document in your website with taxonomy
+
+Authors are one kind of reference, but there are several others. One of the most important is the relationship between the story and the rest of the website it lives in.
+
+Arc assumes that websites are organized into a taxonomy structure, with sections like Sports or Politics, and subsections within those, like The Washington Capitals or National. Let's describe our website's taxonomy using the Site API, and then insert our document into a section.
+
+All section taxonomies must reside within a website, so let's start by creating a website.
+
+```
+curl -X PUT 'https://api.thepost.arcpublishing.com/site/v3/website/the-post' -d '
+{
+  "_id": "main-website",
+  "display_name": "The Post",
+  "is_default_website": true
+}'
+
+{"_id":"main-website","display_name":"The Post","is_default_website":true}
+```
+
+Now that we have a website, let's add a Science section and Animals and Plants subsections.
+
+```
+curl -X POST 'https://api.thepost.arcpublishing.com/site/v2/' -d '
+{
+  "_id":"/science",
+  "_website": "main-website",
+  "name": "Science",
+  "parent": { "default": "/" },
+  "order": { "default": 10 }}'
+}'
+
+{"ok":true,"reason":"Insert successful."}
+
+curl -X POST 'https://api.thepost.arcpublishing.com/site/v2/' -d '
+{
+  "_id":"/science/animals",
+  "_website": "main-website",
+  "name": "Animals",
+  "parent": { "default": "/science" },
+  "order": { "default": 10 }}'
+}'
+
+{"ok":true,"reason":"Insert successful."}
+
+curl -X POST 'https://api.thepost.arcpublishing.com/site/v2/' -d '
+{
+  "_id":"/science/plants",
+  "_website": "main-website",
+  "name": "Plants",
+  "parent": { "default": "/science" },
+  "order": { "default": 20 }}'
+}'
+
+{"ok":true,"reason":"Insert successful."}
+
+```
+
+Now let's indicate that our story about either kangaroos or armadillos is in the /science and /science/animals sections. Edit your local file to look like this:
+
+```json
+{
+  "type": "story",
+  "version": "0.5.8",
+  "_id": "TLAWPF3RHJAW5LWWJB2DHQXDT4",
+
+  "headlines": {
+    "basic": "My First Arc Document, Updated"
+  },
+
+  "subheadlines": {
+    "basic": "Created in Arc"
+  },
+
+  "credits": {
+    "by": [
+      {
+        "type": "reference",
+        "referent": {
+          "type": "author",
+          "id": "engelg2",
+          "provider": ""
+        }
+      }
+    ]
+  },
+
+  "content_elements": [
+    {
+      "type": "text",
+      "content": "This document was created via a call to the Story API."
+    },
+    {
+      "type": "text",
+      "content": "My favorite animal is the armadillo."
+    }
+  ],
+  "display_date": "2017-12-11T14:42:51-05:00",
+
+  "taxonomy": {
+    "sites": [{
+      "type": "reference",
+      "referent": {
+        "type": "site",
+        "id": "/science",
+        "provider": ""
+      }
+    }, {
+      "type": "reference",
+      "referent": {
+        "type": "site",
+        "id": "/science/animals",
+        "provider": ""
+      }
+    }]
+  },
+
+  "revision": {
+    "parent_id": "TK5GTKGELJB6RFOPBAIA2OHR2I"
+  }
+}
+```
+
+For more details about the Site API, see this: https://arcpublishing.atlassian.net/wiki/spaces/CA/pages/37814304/Site+Service+API
+
+We added references to two of the new sections we created in `taxonomy.sites`. Let's update the document in the story API:
+
+```
+curl -X PUT https://api.thepost.arcpublishing.com/story/v2/story/TLAWPF3RHJAW5LWWJB2DHQXDT4 --data @/some/path/on/your/local/computer/my-first-arc-document.json
+
+{"_id":"TLAWPF3RHJAW5LWWJB2DHQXDT4","type":"story","version":"0.5.8","content_elements":[{"_id":"QUUVGNKWW5G63OGGVIBEQWBKGM","type":"text","content":"This document was created via a call to the Story API."},{"_id":"V7ELMB7OLJBW5NMSQQRSMILXUQ","type":"text","content":"My favorite animal is the armadillo."}],"created_date":"2017-12-11T19:52:12.736Z","revision":{"revision_id":"BWSCXT3Z7ZE2ZMMP54MYRF45TU","parent_id":"TK5GTKGELJB6RFOPBAIA2OHR2I","branch":"default"},"last_updated_date":"2017-12-12T15:07:59.843Z","headlines":{"basic":"My First Arc Document, Updated"},"owner":{"id":"staging"},"display_date":"2017-12-11T14:42:51-05:00","credits":{"by":[{"type":"reference","referent":{"type":"author","id":"engelg2","provider":""}}]},"subheadlines":{"basic":"Created in Arc"},"taxonomy":{"sites":[{"type":"reference","referent":{"type":"site","id":"/science","provider":""}},{"type":"reference","referent":{"type":"site","id":"/science/animals","provider":""}}]},"additional_properties":{"has_published_copy":true}}
+```
+
+That's not too interesting by itself, but the inflated version in Content API is somewhat better:
+
+```
+curl -X GET https://api.thepost.arcpublishing.com/content/v3/stories?_id=TLAWPF3RHJAW5LWWJB2DHQXDT4&published=false
+
+{"_id":"TLAWPF3RHJAW5LWWJB2DHQXDT4","type":"story","version":"0.5.8","content_elements":[{"_id":"QUUVGNKWW5G63OGGVIBEQWBKGM","type":"text","content":"This document was created via a call to the Story API."},{"_id":"V7ELMB7OLJBW5NMSQQRSMILXUQ","type":"text","content":"My favorite animal is the armadillo."}],"created_date":"2017-12-11T19:52:12.736Z","revision":{"revision_id":"BWSCXT3Z7ZE2ZMMP54MYRF45TU","parent_id":"TK5GTKGELJB6RFOPBAIA2OHR2I","branch":"default","published":false},"last_updated_date":"2017-12-12T15:07:59.843Z","headlines":{"basic":"My First Arc Document, Updated"},"owner":{"id":"staging"},"display_date":"2017-12-11T14:42:51-05:00","credits":{"by":[{"_id":"engelg2","type":"author","version":"0.5.8","name":"Gregory Engel","description":"A developer at Arc Publishing","additional_properties":{"original":{"_id":"engelg2","name":"Gregory Engel","bio":"A developer at Arc Publishing"}}}]},"subheadlines":{"basic":"Created in Arc"},"taxonomy":{"sites":[{"_id":"/science","type":"site","version":"0.5.8","name":"Science","path":"/science","parent_id":"/","additional_properties":{"original":{"_id":"/science","name":"Science","parent":"/","inactive":false,"order":100059}}},{"_id":"/science/animals","type":"site","version":"0.5.8","name":"Animals","path":"/science/animals","parent_id":"/science","additional_properties":{"original":{"_id":"/science/animals","name":"Animals","parent":"/science","inactive":false,"order":100069}}}]},"additional_properties":{"has_published_copy":true},"publishing":{"scheduled_operations":{"publish_edition":[],"unpublish_edition":[]}}}
+```
+
+We can see all the data we added to the Science and Animals sections present in the inflated Content API document.
+
+Perhaps more importantly, we can search on some of the data in those sections, even if it is not present in our original story.  Let's query for "science" stories in Content API:
+
+```
+curl -X GET https://api.thepost.arcpublishing.com/content/v3/search/?q=Science
+
+{"type":"results","version":"0.5.3","content_elements":[{"type":"story","version":"0.5.8","content_elements":[{"_id":"QUUVGNKWW5G63OGGVIBEQWBKGM","type":"text","content":"This document was created via a call to the Story API."},{"_id":"V7ELMB7OLJBW5NMSQQRSMILXUQ","type":"text","content":"My favorite animal is the armadillo."}],"created_date":"2017-12-11T19:52:12.736Z","revision":{"revision_id":"BWSCXT3Z7ZE2ZMMP54MYRF45TU","parent_id":"TK5GTKGELJB6RFOPBAIA2OHR2I","branch":"default","published":false},"last_updated_date":"2017-12-12T15:07:59.843Z","headlines":{"basic":"My First Arc Document, Updated"},"owner":{"id":"staging"},"display_date":"2017-12-11T14:42:51-05:00","credits":{"by":[{"_id":"engelg2","type":"author","version":"0.5.8","name":"Gregory Engel","description":"A developer at Arc Publishing","additional_properties":{"original":{"_id":"engelg2","name":"Gregory Engel","bio":"A developer at Arc Publishing"}}}]},"subheadlines":{"basic":"Created in Arc"},"taxonomy":{"sites":[{"_id":"/science","type":"site","version":"0.5.8","name":"Science","path":"/science","parent_id":"/","additional_properties":{"original":{"_id":"/science","name":"Science","parent":"/","inactive":false,"order":100059}}},{"_id":"/science/animals","type":"site","version":"0.5.8","name":"Animals","path":"/science/animals","parent_id":"/science","additional_properties":{"original":{"_id":"/science/animals","name":"Animals","parent":"/science","inactive":false,"order":100069}}}]},"additional_properties":{"has_published_copy":true},"publishing":{"scheduled_operations":{"publish_edition":[],"unpublish_edition":[]}},"_id":"TLAWPF3RHJAW5LWWJB2DHQXDT4"}],"additional_properties":{"took":4,"timed_out":false},"count":1,"next":0}
+```
+
+Our query for "Science" matched our story document, because "Science" is the name of a section our story is in.
+
+
+### Adding an image
+
+Most articles aren't just text, they also include an image, sometimes more than one! To include an image in our document, we must first upload it to the Image API, also known as Anglerfish.
+
+First, let's create a separate ANS document to describe our image.
+
+Create a file called `/some/path/on/your/local/computer/my-arc-image.json` on your local machine, and edit it to look like this:
+
+```json
+{
+  "type": "image",
+  "version": "0.5.8",
+
+  "additional_properties": {
+    "originalUrl": "https://www.washingtonpost.com/rf/image_480x320/2010-2019/WashingtonPost/2017/12/07/RealEstate/Images/ORI02.JPG"
+  }
+}
+```
+
+
+(Note that the the Anglerfish API format is a little different, so make sure you do NOT include "Content-Type: application/json" in the HTTP headers)
+
+```
+ curl --user 2016-07:93e47ebf87ab9fd07d28af6da82d836bf4a224130fcc0d1df86f7a09d9bbe3580c664fe9fb353af5a36b4fd9b33bd5ceb610ee6688a0f415b92ec0f03c1887fdefe0 -X POST -F "ans=@/Users/engelg/photo.json; type=application/json" 'https://api.staging.arcpublishing.com/photo/api/v2/photos'
+
+ {"_id":"JXJTKHKE6NHH7ODZ5VYEIKQVQM","additional_properties":{"mime_type":"image/jpeg","originalUrl":"https://www.washingtonpost.com/rf/image_480x320/2010-2019/WashingtonPost/2017/12/07/RealEstate/Images/ORI02.JPG","proxyUrl":"/photo/resize/F2zV-JyTwVOqeRD6oUEAJQlaD-4=/arc-anglerfish-staging-staging/JXJTKHKE6NHH7ODZ5VYEIKQVQM.JPG","resizeUrl":"http://anglerfish-staging-thumbor.internal.arc2.nile.works/F2zV-JyTwVOqeRD6oUEAJQlaD-4=/arc-anglerfish-staging-staging/JXJTKHKE6NHH7ODZ5VYEIKQVQM.JPG"},"created_date":"2017-12-12T16:44:07+00:00","height":320,"last_updated_date":"2017-12-12T16:44:07+00:00","licensable":false,"type":"image","version":"0.5.8","width":480}
+ ```
+
+This did a couple of things for us:
+* The image we specified as `originalUrl` in the source ANS was downloaded and stored in the Image API, accessible in the `url` field
+* The height and image were calculated for us in `height` and `width` fields
+* Various metadata fields, including `created_date`, `last_updated_date` were added to the document, similar to our story document in Story API
+
+For more detailed information on Anglerfish and the Image API, see the documentation here: https://arcpublishing.atlassian.net/wiki/spaces/ANG/pages/13338195/Anglerfish+API
+
+Now we can include the image in our document. The reference format is the same we used for authors and sections. This time, though, we'll insert the image directly in the content body itself.
+
+Edit the local story json to look like:
+```json
+{
+  "type": "story",
+  "version": "0.5.8",
+  "_id": "TLAWPF3RHJAW5LWWJB2DHQXDT4",
+
+  "headlines": {
+    "basic": "My First Arc Document, Updated"
+  },
+
+  "subheadlines": {
+    "basic": "Created in Arc"
+  },
+
+  "credits": {
+    "by": [
+      {
+        "type": "reference",
+        "referent": {
+          "type": "author",
+          "id": "engelg2",
+          "provider": ""
+        }
+      }
+    ]
+  },
+
+  "content_elements": [
+    {
+      "type": "text",
+      "content": "This document was created via a call to the Story API."
+    },
+    {
+      "type": "reference",
+      "referent": {
+        "type": "image",
+        "id": "JXJTKHKE6NHH7ODZ5VYEIKQVQM",
+        "provider": ""
+      }
+    },
+    {
+      "type": "text",
+      "content": "My favorite animal is the armadillo."
+    }
+  ],
+  "display_date": "2017-12-11T14:42:51-05:00",
+
+  "taxonomy": {
+    "sites": [{
+      "type": "reference",
+      "referent": {
+        "type": "site",
+        "id": "/science",
+        "provider": ""
+      }
+    }, {
+      "type": "reference",
+      "referent": {
+        "type": "site",
+        "id": "/science/animals",
+        "provider": ""
+      }
+    }]
+  },
+
+  "revision": {
+    "parent_id": "BWSCXT3Z7ZE2ZMMP54MYRF45TU"
+  }
+}
+
+```
+
+And PUT the update to Story API:
+
+```
+curl -X PUT http://api.thepost.arcpublishing.com/story/v2/story/TLAWPF3RHJAW5LWWJB2DHQXDT4 --data @/some/path/on/your/local/computer/my-first-arc-document.json
+
+{"_id":"TLAWPF3RHJAW5LWWJB2DHQXDT4","type":"story","version":"0.5.8","content_elements":[{"_id":"QOMQZYXMXVDEDIHROL2D3EUSHA","type":"text","content":"This document was created via a call to the Story API."},{"_id":"IA6RGMNIIVF6FCOFTQT22FFRJ4","type":"reference","referent":{"type":"image","id":"JXJTKHKE6NHH7ODZ5VYEIKQVQM","provider":""}},{"_id":"PP7ESJELPRCT5A2YJK74E67XDI","type":"text","content":"My favorite animal is the armadillo."}],"created_date":"2017-12-11T19:52:12.736Z","revision":{"revision_id":"AQXPF7XEGFCQJOZLM3JPO3UO7A","parent_id":"BWSCXT3Z7ZE2ZMMP54MYRF45TU","branch":"default"},"last_updated_date":"2017-12-12T17:07:01.334Z","headlines":{"basic":"My First Arc Document, Updated"},"owner":{"id":"staging"},"display_date":"2017-12-11T14:42:51-05:00","credits":{"by":[{"type":"reference","referent":{"type":"author","id":"engelg2","provider":""}}]},"subheadlines":{"basic":"Created in Arc"},"taxonomy":{"sites":[{"type":"reference","referent":{"type":"site","id":"/science","provider":""}},{"type":"reference","referent":{"type":"site","id":"/science/animals","provider":""}}]},"additional_properties":{"has_published_copy":true}}
+```
+
+
+Finally, let's fetch the denormalized story in Content API to make sure the image data is available:
+
+```
+curl -X GET https://api.thepost.arcpublishing.com/content/v3/stories?_id=TLAWPF3RHJAW5LWWJB2DHQXDT4&published=false'
+
+{"_id":"TLAWPF3RHJAW5LWWJB2DHQXDT4","type":"story","version":"0.5.8","content_elements":[{"_id":"QOMQZYXMXVDEDIHROL2D3EUSHA","type":"text","content":"This document was created via a call to the Story API."},{"_id":"JXJTKHKE6NHH7ODZ5VYEIKQVQM","additional_properties":{"galleries":[],"mime_type":"image/jpeg","originalUrl":"https://arc-anglerfish-staging-staging.s3.amazonaws.com/JXJTKHKE6NHH7ODZ5VYEIKQVQM.JPG","proxyUrl":"/photo/resize/F2zV-JyTwVOqeRD6oUEAJQlaD-4=/arc-anglerfish-staging-staging/JXJTKHKE6NHH7ODZ5VYEIKQVQM.JPG","published":false,"resizeUrl":"http://anglerfish-staging-thumbor.internal.arc2.nile.works/F2zV-JyTwVOqeRD6oUEAJQlaD-4=/arc-anglerfish-staging-staging/JXJTKHKE6NHH7ODZ5VYEIKQVQM.JPG","version":0},"created_date":"2017-12-12T16:44:07+00:00","height":320,"last_updated_date":"2017-12-12T16:44:07+00:00","licensable":false,"owner":{"id":"staging","name":"Organization Name Override Goes Here"},"type":"image","url":"https://arc-anglerfish-staging-staging.s3.amazonaws.com/JXJTKHKE6NHH7ODZ5VYEIKQVQM.JPG","version":"0.5.8","width":480},{"_id":"PP7ESJELPRCT5A2YJK74E67XDI","type":"text","content":"My favorite animal is the armadillo."}],"created_date":"2017-12-11T19:52:12.736Z","revision":{"revision_id":"AQXPF7XEGFCQJOZLM3JPO3UO7A","parent_id":"BWSCXT3Z7ZE2ZMMP54MYRF45TU","branch":"default","published":false},"last_updated_date":"2017-12-12T17:07:01.334Z","headlines":{"basic":"My First Arc Document, Updated"},"owner":{"id":"staging"},"display_date":"2017-12-11T14:42:51-05:00","credits":{"by":[{"_id":"engelg2","type":"author","version":"0.5.8","name":"Gregory Engel","description":"A developer at Arc Publishing","additional_properties":{"original":{"_id":"engelg2","name":"Gregory Engel","bio":"A developer at Arc Publishing"}}}]},"subheadlines":{"basic":"Created in Arc"},"taxonomy":{"sites":[{"_id":"/science","type":"site","version":"0.5.8","name":"Science","path":"/science","parent_id":"/","additional_properties":{"original":{"_id":"/science","name":"Science","parent":"/","inactive":false,"order":100059}}},{"_id":"/science/animals","type":"site","version":"0.5.8","name":"Animals","path":"/science/animals","parent_id":"/science","additional_properties":{"original":{"_id":"/science/animals","name":"Animals","parent":"/science","inactive":false,"order":100069}}}]},"additional_properties":{"has_published_copy":true},"publishing":{"scheduled_operations":{"publish_edition":[],"unpublish_edition":[]}}}
+```
+
+That's a little hard to read, but cleaned up it looks like:
+
+
+```json
+{
+  "_id": "TLAWPF3RHJAW5LWWJB2DHQXDT4",
+  "type": "story",
+  "version": "0.5.8",
+  "headlines": {
+    "basic": "My First Arc Document, Updated"
+  },
+  "subheadlines": {
+    "basic": "Created in Arc"
+  },
+  "credits": {
+    "by": [
+      {
+        "_id": "engelg2",
+        "type": "author",
+        "version": "0.5.8",
+        "name": "Gregory Engel",
+        "description": "A developer at Arc Publishing",
+        "additional_properties": {
+          "original": {
+            "_id": "engelg2",
+            "name": "Gregory Engel",
+            "bio": "A developer at Arc Publishing"
+          }
+        }
+      }
+    ]
+  },
+  "display_date": "2017-12-11T14:42:51-05:00",
+  "content_elements": [
+    {
+      "_id": "QOMQZYXMXVDEDIHROL2D3EUSHA",
+      "type": "text",
+      "content": "This document was created via a call to the Story API."
+    },
+    {
+      "_id": "JXJTKHKE6NHH7ODZ5VYEIKQVQM",
+      "additional_properties": {
+        "galleries": [],
+        "mime_type": "image/jpeg",
+        "originalUrl": "https://arc-anglerfish-staging-staging.s3.amazonaws.com/JXJTKHKE6NHH7ODZ5VYEIKQVQM.JPG",
+        "proxyUrl": "/photo/resize/F2zV-JyTwVOqeRD6oUEAJQlaD-4=/arc-anglerfish-staging-staging/JXJTKHKE6NHH7ODZ5VYEIKQVQM.JPG",
+        "published": false,
+        "resizeUrl": "http://anglerfish-staging-thumbor.internal.arc2.nile.works/F2zV-JyTwVOqeRD6oUEAJQlaD-4=/arc-anglerfish-staging-staging/JXJTKHKE6NHH7ODZ5VYEIKQVQM.JPG",
+        "version": 0
+      },
+      "created_date": "2017-12-12T16:44:07+00:00",
+      "height": 320,
+      "last_updated_date": "2017-12-12T16:44:07+00:00",
+      "licensable": false,
+      "owner": {
+        "id": "staging",
+        "name": "Organization Name Override Goes Here"
+      },
+      "type": "image",
+      "url": "https://arc-anglerfish-staging-staging.s3.amazonaws.com/JXJTKHKE6NHH7ODZ5VYEIKQVQM.JPG",
+      "version": "0.5.8",
+      "width": 480
+    },
+    {
+      "_id": "PP7ESJELPRCT5A2YJK74E67XDI",
+      "type": "text",
+      "content": "My favorite animal is the armadillo."
+    }
+  ],
+  "created_date": "2017-12-11T19:52:12.736Z",
+  "revision": {
+    "revision_id": "AQXPF7XEGFCQJOZLM3JPO3UO7A",
+    "parent_id": "BWSCXT3Z7ZE2ZMMP54MYRF45TU",
+    "branch": "default",
+    "published": false
+  },
+  "last_updated_date": "2017-12-12T17:07:01.334Z",
+  "owner": {
+    "id": "staging"
+  },
+  "taxonomy": {
+    "sites": [
+      {
+        "_id": "/science",
+        "type": "site",
+        "version": "0.5.8",
+        "name": "Science",
+        "path": "/science",
+        "parent_id": "/",
+        "additional_properties": {
+          "original": {
+            "_id": "/science",
+            "name": "Science",
+            "parent": "/",
+            "inactive": false,
+            "order": 100059
+          }
+        }
+      },
+      {
+        "_id": "/science/animals",
+        "type": "site",
+        "version": "0.5.8",
+        "name": "Animals",
+        "path": "/science/animals",
+        "parent_id": "/science",
+        "additional_properties": {
+          "original": {
+            "_id": "/science/animals",
+            "name": "Animals",
+            "parent": "/science",
+            "inactive": false,
+            "order": 100069
+          }
+        }
+      }
+    ]
+  },
+  "additional_properties": {
+    "has_published_copy": true
+  },
+  "publishing": {
+    "scheduled_operations": {
+      "publish_edition": [],
+      "unpublish_edition": []
+    }
+  }
+}
+```
+
+
+
+
+We now have an inflated document:
+* With different content in the unpublished and published versions
+* With a paragraph, an image, and another paragraph in the body
+* That is associated with two sections (/science and /science/animals)
+* That has an author
+
+We're almost ready to publish the final version! We just need one more thing: a url for the web.
+
+## Adding a URL
+
+The simplest way to set the url for a document is to POST one to the URL Service. Let's add one to our document:
+
+```
+curl -X https://api.thepost.arcpublishing.com/url/v1/url' -d '{"_id":"TLAWPF3RHJAW5LWWJB2DHQXDT4", "canonical_url":"/my-first-arc-document" }'
+
+{"url":"/my-first-arc-document","format":null}
+```
+
+This links the relative url "/my-first-arc-document" to the story ID "TLAWPF3RHJAW5LWWJB2DHQXDT4". This url will be added to the document on subsequent updates and publishes.
+
+Let's publish the final revision of our document now to see the `canonical_url` appear.
+
+```
+curl -X PUT https://api.thepost.arcpublishing.com/story/v2/story/TLAWPF3RHJAW5LWWJB2DHQXDT4/edition/default -d '{"revision_id":"AQXPF7XEGFCQJOZLM3JPO3UO7A"}'
+
+{"_id":"TLAWPF3RHJAW5LWWJB2DHQXDT4","type":"story","version":"0.5.8","content_elements":[{"_id":"QOMQZYXMXVDEDIHROL2D3EUSHA","type":"text","content":"This document was created via a call to the Story API."},{"_id":"IA6RGMNIIVF6FCOFTQT22FFRJ4","type":"reference","referent":{"type":"image","id":"JXJTKHKE6NHH7ODZ5VYEIKQVQM","provider":""}},{"_id":"PP7ESJELPRCT5A2YJK74E67XDI","type":"text","content":"My favorite animal is the armadillo."}],"created_date":"2017-12-11T19:52:12.736Z","revision":{"revision_id":"AQXPF7XEGFCQJOZLM3JPO3UO7A","parent_id":"BWSCXT3Z7ZE2ZMMP54MYRF45TU","branch":"default"},"last_updated_date":"2017-12-12T17:07:01.334Z","headlines":{"basic":"My First Arc Document, Updated"},"display_date":"2017-12-11T20:53:20.825Z","credits":{"by":[{"type":"reference","referent":{"type":"author","id":"engelg2","provider":""}}]},"subheadlines":{"basic":"Created in Arc"},"first_publish_date":"2017-12-11T20:53:20.825Z","taxonomy":{"sites":[{"type":"reference","referent":{"type":"site","id":"/science","provider":""}},{"type":"reference","referent":{"type":"site","id":"/science/animals","provider":""}}]},"additional_properties":{"has_published_copy":true},"publish_date":"2017-12-12T17:48:43.578Z"}
+```
+
+And finally, we can see the resulting document in Content API complete:
+
+```
+curl -X GET 'https://api.thepost.arcpublishing.com/content/v3/stories?_id=TLAWPF3RHJAW5LWWJB2DHQXDT4&published=true'
+
+{"_id":"TLAWPF3RHJAW5LWWJB2DHQXDT4","type":"story","version":"0.5.8","content_elements":[{"_id":"QOMQZYXMXVDEDIHROL2D3EUSHA","type":"text","content":"This document was created via a call to the Story API."},{"_id":"IA6RGMNIIVF6FCOFTQT22FFRJ4","type":"reference","referent":{"type":"image","id":"JXJTKHKE6NHH7ODZ5VYEIKQVQM","provider":""}},{"_id":"PP7ESJELPRCT5A2YJK74E67XDI","type":"text","content":"My favorite animal is the armadillo."}],"created_date":"2017-12-11T19:52:12.736Z","revision":{"revision_id":"AQXPF7XEGFCQJOZLM3JPO3UO7A","parent_id":"BWSCXT3Z7ZE2ZMMP54MYRF45TU","editions":["default"],"branch":"default","published":true},"last_updated_date":"2017-12-12T17:07:01.334Z","headlines":{"basic":"My First Arc Document, Updated"},"owner":{"id":"staging"},"display_date":"2017-12-11T20:53:20.825Z","credits":{"by":[{"_id":"engelg2","type":"author","version":"0.5.8","name":"Gregory Engel","description":"A developer at Arc Publishing","additional_properties":{"original":{"_id":"engelg2","name":"Gregory Engel","bio":"A developer at Arc Publishing"}}}]},"subheadlines":{"basic":"Created in Arc"},"first_publish_date":"2017-12-11T20:53:20.825Z","taxonomy":{"sites":[{"_id":"/science","type":"site","version":"0.5.8","name":"Science","path":"/science","parent_id":"/","additional_properties":{"original":{"_id":"/science","name":"Science","parent":"/","inactive":false,"order":100059}}},{"_id":"/science/animals","type":"site","version":"0.5.8","name":"Animals","path":"/science/animals","parent_id":"/science","additional_properties":{"original":{"_id":"/science/animals","name":"Animals","parent":"/science","inactive":false,"order":100069}}}]},"additional_properties":{"has_published_copy":true},"publish_date":"2017-12-12T17:48:43.578Z","canonical_url":"/my-first-arc-document","publishing":{"scheduled_operations":{"publish_edition":[],"unpublish_edition":[]}}}
+```
