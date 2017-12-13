@@ -359,6 +359,9 @@ The reference format in ANS looks like this:
 
 The document we created put a reference in the `credits.by` field in the document, indicating that this story is "by" this author. Any relationships are allowed, but the most commonly used are "by" and "photos_by". Note that each of these fields is an ordered list, so mutliple authors are possible. (Sub-authors, like "contributors" or "additional_reporting_by" are also possible, but not indexed or searchable in Content API.)
 
+The full list of inflation types and how they can be included in your story is at the bottom of this document.
+
+
 ## Organizing your document in your website with taxonomy
 
 Authors are one kind of reference, but there are several others. One of the most important is the relationship between the story and the rest of the website it lives in.
@@ -965,7 +968,211 @@ curl -X GET 'https://api.thepost.arcpublishing.com/content/v3/stories?_id=TLAWPF
 ```
  ...and indeed we do!
 
-## Additional Resources
+## Appendix: Inflation Details
+
+### General Notes & Limitations
+
+In most cases, inflation will only ever be performed to a depth of 1. References on a source document added to the Content API will be resolved, but references on the referent objects (those added to the document) will not be inflated. The only exception to this is that after images have been inflated, author references on the inflated images will be resolved. 
+
+*The maximum number of references on a source document is 300.* Documents with a number of first-depth references greater than this limit will be rejected.
+
+### Authors
+
+Authors are inflated from the Author API and can be inflated only within the `credits` object:
+
+```json
+{
+  "type": "story",
+  "version": "0.5.8",
+
+  "credits": {
+    "by": [
+      {
+        "type": "reference",
+        "referent": {
+          "type": "author",
+          "id": "engelg",
+          "provider": ""
+        }
+      },
+      {
+        "type": "reference",
+        "referent": {
+          "type": "author",
+          "id": "kimt",
+          "provider": ""
+        }
+      }
+    ],
+    "photos_by": [
+      {
+        "type": "reference",
+        "referent": {
+          "type": "author",
+          "id": "burnettj",
+          "provider": ""
+        }
+      }
+    ]
+  }
+}
+```
+
+### Sections
+
+Sections are inflated from the Site API and can be inflated only in `taxonomy.sites` and `taxonomy.primary_site`:
+
+```json
+{
+  "type": "story",
+  "version": "0.5.8",
+
+  "taxonomy": {
+    "primary_site": {
+      "type": "reference",
+      "referent": {
+        "type": "site",
+        "id": "/sports",
+        "provider": ""
+      }
+    },
+    "sites": [
+      {
+        "type": "reference",
+        "referent": {
+          "type": "site",
+          "id": "/sports",
+          "provider": ""
+        }
+      },
+      {
+        "type": "reference",
+        "referent": {
+          "type": "site",
+          "id": "/sports/lakers",
+          "provider": ""
+        }
+      }
+    ]
+  }
+}
+```
+
+### Images
+
+Images are inflated from the Photo API and can be inflated in `content_elements`, in `related_content`, and in `promo_items`. 
+
+* `content_elements` is an ordered list of the core content of a document.
+* `related_content` is a map of arbitrary keys to lists of references.
+* `promo_items` is a map of arbitrary keys to a single reference.
+
+```json
+
+{
+  "type": "story",
+  "version": "0.5.8",
+
+  "content_elements": [
+    { 
+      "type": "text",
+      "content": "An image follows this paragraph."
+    },
+    {
+      "type": "reference",
+      "referent": {
+        "type": "image",
+        "id": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+        "provider": ""
+      }
+    }
+  ],
+  
+  "related_content": {
+    "basic": [
+      {
+        "type": "reference",
+        "referent": {
+          "type": "image",
+          "id": "AAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "provider": ""
+        }
+      }
+    ]
+  },
+  
+  "promo_items": {
+    "basic": {
+      "type": "reference",
+      "referent": {
+        "type": "image",
+        "id": "BBBBBBBBBBBBBBBBBBBBBBBBBB",
+        "provider": ""
+      }
+    }
+  }
+}
+```
+
+### Other Documents
+
+The three top-level types of document in the Content API *(Story, Video, and Gallery)* can themselves be inflated from another document. The placement rules for these are essentially the same as for images.
+
+* Stories are inflated from the Story API
+* Galleries are inflated from the Photo API / Anglerfish
+* Videos are inflated from the Video API / Goldfish
+
+```json
+{
+  "type": "story",
+  "version": "0.5.8",
+
+  "content_elements": [
+    { 
+      "type": "text",
+      "content": "An image follows this paragraph."
+    },
+    {
+      "type": "reference",
+      "referent": {
+        "type": "story",
+        "id": "DEFGHIJKLMNOPQRSTUVWXYZABC",
+        "provider": ""
+      }
+    }
+  ],
+  
+  "related_content": {
+    "basic": [
+      {
+        "type": "reference",
+        "referent": {
+          "type": "video",
+          "id": "AAAAAAAAAAAAAAAAAAAAAAABCD",
+          "provider": ""
+        }
+      }
+    ]
+  },
+  
+  "promo_items": {
+    "basic": {
+      "type": "reference",
+      "referent": {
+        "type": "gallery",
+        "id": "BBBBBBBBBBBBBBBBBBBBBBBCDE",
+        "provider": ""
+      }
+    }
+  }
+}
+```
+
+### URLs
+
+URLs are denormalized from the URL API. No reference is required -- the URL will be fetched by the document ID and placed in `canonical_url`. Note that despite the field name, the url has a relative path.
+
+
+## Appendix: Additional Resources
 
 The complete list of reference documentation for the APIs used in this document:
 
