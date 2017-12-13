@@ -976,4 +976,4 @@ The complete list of reference documentation for the APIs used in this document:
 * [Sites API](https://arcpublishing.atlassian.net/wiki/spaces/CA/pages/39157865/Author+Service+API)
 * [Image API / Anglerfish](https://arcpublishing.atlassian.net/wiki/spaces/ANG/pages/13338195/Anglerfish+API)
 * [URL API](https://arcpublishing.atlassian.net/wiki/spaces/CA/pages/13338275/Url+Service)
-* [Tags API] (https://arcpublishing.atlassian.net/wiki/spaces/CA/pages/39157816/Tags+API)
+* [Tags API](https://arcpublishing.atlassian.net/wiki/spaces/CA/pages/39157816/Tags+API)
