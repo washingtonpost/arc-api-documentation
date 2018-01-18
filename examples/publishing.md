@@ -972,7 +972,7 @@ curl -X GET 'https://api.thepost.arcpublishing.com/content/v3/stories?_id=TLAWPF
 
 ### General Notes & Limitations
 
-In most cases, inflation will only ever be performed to a depth of 1. References on a source document added to the Content API will be resolved, but references on the referent objects (those added to the document) will not be inflated. The only exception to this is that after images have been inflated, author references on the inflated images will be resolved. 
+In most cases, inflation will only ever be performed to a depth of 1. References on a source document added to the Content API will be resolved, but references on the referent objects (those added to the document) will not be inflated. The only exception to this is that after images have been inflated, author references on the inflated images will be resolved.
 
 *The maximum number of references on a source document is 300.* Documents with a number of first-depth references greater than this limit will be rejected.
 
@@ -1060,7 +1060,7 @@ Sections are inflated from the Site API and can be inflated only in `taxonomy.si
 
 ### Images
 
-Images are inflated from the Photo API and can be inflated in `content_elements`, in `related_content`, and in `promo_items`. 
+Images are inflated from the Photo API and can be inflated in `content_elements`, in `related_content`, and in `promo_items`.
 
 * `content_elements` is an ordered list of the core content of a document.
 * `related_content` is a map of arbitrary keys to lists of references.
@@ -1073,7 +1073,7 @@ Images are inflated from the Photo API and can be inflated in `content_elements`
   "version": "0.5.8",
 
   "content_elements": [
-    { 
+    {
       "type": "text",
       "content": "An image follows this paragraph."
     },
@@ -1086,7 +1086,7 @@ Images are inflated from the Photo API and can be inflated in `content_elements`
       }
     }
   ],
-  
+
   "related_content": {
     "basic": [
       {
@@ -1099,7 +1099,7 @@ Images are inflated from the Photo API and can be inflated in `content_elements`
       }
     ]
   },
-  
+
   "promo_items": {
     "basic": {
       "type": "reference",
@@ -1127,7 +1127,7 @@ The three top-level types of document in the Content API *(Story, Video, and Gal
   "version": "0.5.8",
 
   "content_elements": [
-    { 
+    {
       "type": "text",
       "content": "An image follows this paragraph."
     },
@@ -1140,7 +1140,7 @@ The three top-level types of document in the Content API *(Story, Video, and Gal
       }
     }
   ],
-  
+
   "related_content": {
     "basic": [
       {
@@ -1153,7 +1153,7 @@ The three top-level types of document in the Content API *(Story, Video, and Gal
       }
     ]
   },
-  
+
   "promo_items": {
     "basic": {
       "type": "reference",
