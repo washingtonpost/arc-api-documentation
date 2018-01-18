@@ -30,8 +30,6 @@ This document demonstrates how to take advantage of the new multi-site features 
 
 * `section`-- A section is a hierarchical node within a website. The usually correspond to different verticals within a publication, for example, "Sports" or "Politics."
 
-* `hierarchy` -- A hierarchy is a set of relationships between nodes that forms a single tree. A single section can appear in each hierarchy only once, however the same section may appear in different hierarchies with distinct section-section relationships in each. For example, you might create a hierarchy "top-nav" to represent a navigation panel at the top of your website, and "footer" to represent a navigation tree at the bottom.
-
 * `document` -- A document is any piece of content that a user can publish to a website. An ANS document can be a story, image gallery, or video. Documents are searchable in the Content API and renderable using PageBuilder templates. See [the ANS document schema](https://github.com/washingtonpost/ans-schema). This guide will focus on story documents.
 
 
@@ -83,7 +81,7 @@ curl -X PUT 'https://api.thepost.arcpublishing.com/site/v3/website/rivercitynews
 {"_id":"/sports","_website":"rivercitynews","site":{"site_title":"Sports"},"parent":{"default":"/"},"inactive":false}
 ```
 
-We'll add two similar sections to The Mountain Village Gazette. But since Mountain Village residents are extremely passionate about football, we'll also add a section for their football team, The Mountain Goats.
+We'll add two similar sections to The Mountain Village Gazette. But since Mountain Village residents are extremely passionate about croquet, we'll also add a section for their croquet team, The Mountain Goats.
 
 ```bash
 curl -X PUT 'https://api.thepost.arcpublishing.com/site/v3/website/mountainvillagegazette/section/?_id=/news' -d '{
@@ -129,3 +127,120 @@ The sections in our two websites now look like this:
 
 
 ## Categorize a single document in sections in different websites
+
+Now that our websites and sections are created, we can create a document and assign it to different sections.
+
+Here's a story document that describes a recent croquet game between The Mountain Goats and The River Turtles. It was written by Brooks Robinson of the The River City News, but will also be published by The Mountain Village Gazette. The content of the document is the same for both websites, but it will appear in different sections in each. The River City News would like to highlight the Turtles' victory at the top of the News section, while the The Mountain Village Gazette relegates the story to the dedicated Mountain Goats section. Both newspapers will include the story in their respective Sports sections.
+
+```json
+{
+  "_id": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+  "type": "story",
+  "version": "0.6.0",
+
+  "revision": {
+    "revision_id": "BCDEFGHIJKLMNOPQRSTUVWXYZA"
+  },
+
+  "headlines": {
+    "basic": "River Turtles Defeat Mountain Goats in Annual Croquet Match"
+  },
+
+  "content_elements": [
+    {
+      "type": "text",
+      "content": "In a surprise upset, The River Turtles of River City have defeated their long-time rivals, The Mountain Goats of Mountain Village, in a tightly-contested match lasting over five hours. The final score was 26-25."
+    }
+  ],
+
+  "credits": {
+    "by": [
+      {
+        "type": "author",
+        "version": "0.6.0",
+        "name": "Brooks Robinson"
+      }
+    ]
+  },
+
+  "display_date": "2018-01-18T12:00:00Z",
+
+  "taxonomy": {
+    "sections": [
+      {
+        "type": "reference",
+        "referent": {
+          "type": "section",
+          "id": "/sports",
+          "website": "rivercitynews"
+        }
+      },
+      {
+        "type": "reference",
+        "referent": {
+          "type": "section",
+          "id": "/news",
+          "website": "rivercitynews"
+        }
+      },
+      {
+        "type": "reference",
+        "referent": {
+          "type": "section",
+          "id": "/sports",
+          "website": "mountainvillagegazette"
+        }
+      },
+      {
+        "type": "reference",
+        "referent": {
+          "type": "section",
+          "id": "/sports/the-mountain-goats",
+          "website": "mountainvillagegazette"
+        }
+      }
+    ]
+  },
+
+  "websites": {
+    "rivercitynews": {},
+    "mountainvillagegazette": {}
+  },
+
+  "canonical_website": "rivercitynews"
+}
+
+```
+
+### What's going on here?
+
+* `taxonomy.sections` contains a list of sections *across all websites* that this document belongs to. Here, we've specified each section in the normalized format for entry into Story API.
+* `websites` contains a dictionary with a key for each website the document is considered to be part of. For now, the value associated with each key is empty. We'll come back to that later.
+* `canonical_website` specifies that The River City News was the originating website for this article. This is important for SEO purposes.
+
+Let's submit this as a draft to Story API.
+
+```bash
+curl -X POST http://api.thepost.arcpublishing.com/story/v2/story/ --data @/path/to/river-turtles-defeat-mountain-goats.json
+
+{"_id":"ABCDEFGHIJKLMNOPQRSTUVWXYZ","type":"story","version":"0.6.0","content_elements":[{"_id":"2L565CADAZGXBCCJHRCZPA4L2A","type":"text","content":"In a surprise upset, The River Turtles of River City have defeated their long-time rivals, The Mountain Goats of Mountain Village, in a tightly-contested match lasting over five hours. The final score was 26-25."}],"created_date":"2018-01-18T22:15:10.044Z","revision":{"revision_id":"BCDEFGHIJKLMNOPQRSTUVWXYZA","branch":"default"},"last_updated_date":"2018-01-18T22:15:10.044Z","headlines":{"basic":"River Turtles Defeat Mountain Goats in Annual Croquet Match"},"owner":{"id":"thepost"},"display_date":"2018-01-18T12:00:00Z","credits":{"by":[{"type":"author","version":"0.6.0","name":"Brooks Robinson"}]},"websites":{"rivercitynews":{},"mountainvillagegazette":{}},"taxonomy":{"sections":[{"type":"reference","referent":{"type":"section","id":"/sports","website":"rivercitynews"}},{"type":"reference","referent":{"type":"section","id":"/news","website":"rivercitynews"}},{"type":"reference","referent":{"type":"section","id":"/sports","website":"mountainvillagegazette"}},{"type":"reference","referent":{"type":"section","id":"/sports/the-mountain-goats","website":"mountainvillagegazette"}}]},"additional_properties":{"has_published_copy":false},"canonical_website":"rivercitynews"}
+```
+
+We can then fetch a denormalized version of this draft document from the Content API's mutli-site endpoint, from either website:
+
+```bash
+curl -X GET 'https://api.thepost.arcpublishing.com/content/v4/stories?_id=ABCDEFGHIJKLMNOPQRSTUVWXYZ&published=false&website=rivercitynews'
+
+curl -X GET 'https://api.thepost.arcpublishing.com/content/v4/stories?_id=ABCDEFGHIJKLMNOPQRSTUVWXYZ&published=false&website=mountainvillagegazette'
+```
+
+Publishing this draft works the same as in the single-site workflow: create an edition that points to the revision.
+
+```bash
+curl -X PUT https://api.thepost.arcpublishing.com/story/v2/story/ABCDEFGHIJKLMNOPQRSTUVWXYZ/edition/default -d '{ "revision_id": "BCDEFGHIJKLMNOPQRSTUVWXYZA" }'
+
+{"_id":"ABCDEFGHIJKLMNOPQRSTUVWXYZ","type":"story","version":"0.6.0","content_elements":[{"_id":"2L565CADAZGXBCCJHRCZPA4L2A","type":"text","content":"In a surprise upset, The River Turtles of River City have defeated their long-time rivals, The Mountain Goats of Mountain Village, in a tightly-contested match lasting over five hours. The final score was 26-25."}],"created_date":"2018-01-18T22:15:10.044Z","revision":{"revision_id":"BCDEFGHIJKLMNOPQRSTUVWXYZA","branch":"default"},"last_updated_date":"2018-01-18T22:15:10.044Z","headlines":{"basic":"River Turtles Defeat Mountain Goats in Annual Croquet Match"},"display_date":"2018-01-18T22:34:28.023Z","credits":{"by":[{"type":"author","version":"0.6.0","name":"Brooks Robinson"}]},"first_publish_date":"2018-01-18T22:34:28.023Z","websites":{"rivercitynews":{},"mountainvillagegazette":{}},"taxonomy":{"sections":[{"type":"reference","referent":{"type":"section","id":"/sports","website":"rivercitynews"}},{"type":"reference","referent":{"type":"section","id":"/news","website":"rivercitynews"}},{"type":"reference","referent":{"type":"section","id":"/sports","website":"mountainvillagegazette"}},{"type":"reference","referent":{"type":"section","id":"/sports/the-mountain-goats","website":"mountainvillagegazette"}}]},"additional_properties":{"has_published_copy":false},"publish_date":"2018-01-18T22:34:28.023Z","canonical_website":"rivercitynews"}
+
+```
+
+## Assign a distinct URL for each website to a single document.
