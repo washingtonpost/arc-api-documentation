@@ -46,11 +46,17 @@ We'll start by creating the websites and sections for our organization. Websites
 Let's create two websites called "The River City News" and "The Mountain Village Gazette."
 
 ```bash
-curl  -X PUT https://api.thepost.arcpublishing.com/site/v3/website/rivercitynews -d '{"_id":"rivercitynews", "display_name": "The River City News" }'
+curl  -X PUT https://api.thepost.arcpublishing.com/site/v3/website/rivercitynews -d '{
+  "_id":"rivercitynews",
+  "display_name": "The River City News"
+}'
 
 {"_id":"rivercitynews","display_name":"The River City News"}
 
-curl -X PUT https://api.thepost.arcpublishing.com/site/v3/website/mountainvillagegazette -d '{"_id":"mountainvillagegazette", "display_name": "The Mountain Village Gazette" }'
+curl -X PUT https://api.thepost.arcpublishing.com/site/v3/website/mountainvillagegazette -d '{
+  "_id":"mountainvillagegazette",
+  "display_name": "The Mountain Village Gazette"
+}'
 
 {"_id":"mountainvillagegazette","display_name":"The Mountain Village Gazette"}
 ```
@@ -58,11 +64,21 @@ curl -X PUT https://api.thepost.arcpublishing.com/site/v3/website/mountainvillag
 Now let's add two sections to The River City News: "News" and "Sports."
 
 ```bash
-curl -X PUT 'https://api.thepost.arcpublishing.com/site/v3/website/rivercitynews/section/?_id=/news' -d '{"_id":"/news", "_website": "rivercitynews", "site": {"site_title": "News" }, "parent": { "default": "/" }}'
+curl -X PUT 'https://api.thepost.arcpublishing.com/site/v3/website/rivercitynews/section/?_id=/news' -d '{
+  "_id":"/news",
+  "_website": "rivercitynews",
+  "site": {"site_title": "News" },
+  "parent": { "default": "/" }
+}'
 
 {"_id":"/news","_website":"rivercitynews","site":{"site_title":"News"},"parent":{"default":"/"},"inactive":false}
 
-curl -X PUT 'https://api.thepost.arcpublishing.com/site/v3/website/rivercitynews/section/?_id=/sports' -d '{"_id":"/sports", "_website": "rivercitynews", "site": {"site_title": "Sports" }, "parent": { "default": "/" }}'
+curl -X PUT 'https://api.thepost.arcpublishing.com/site/v3/website/rivercitynews/section/?_id=/sports' -d '{
+  "_id":"/sports",
+  "_website": "rivercitynews",
+  "site": {"site_title": "Sports" },
+  "parent": { "default": "/" }
+}'
 
 {"_id":"/sports","_website":"rivercitynews","site":{"site_title":"Sports"},"parent":{"default":"/"},"inactive":false}
 ```
@@ -70,15 +86,30 @@ curl -X PUT 'https://api.thepost.arcpublishing.com/site/v3/website/rivercitynews
 We'll add two similar sections to The Mountain Village Gazette. But since Mountain Village residents are extremely passionate about football, we'll also add a section for their football team, The Mountain Goats.
 
 ```bash
-curl -X PUT 'https://api.thepost.arcpublishing.com/site/v3/website/mountainvillagegazette/section/?_id=/news' -d '{"_id":"/news", "_website": "mountainvillagegazette", "site": {"site_title": "News" }, "parent": { "default": "/" }}'
+curl -X PUT 'https://api.thepost.arcpublishing.com/site/v3/website/mountainvillagegazette/section/?_id=/news' -d '{
+  "_id":"/news",
+  "_website": "mountainvillagegazette",
+  "site": {"site_title": "News" },
+  "parent": { "default": "/" }
+}'
 
 {"_id":"/news","_website":"mountainvillagegazette","site":{"site_title":"News"},"parent":{"default":"/"},"inactive":false}
 
-curl -X PUT 'https://api.thepost.arcpublishing.com/site/v3/website/mountainvillagegazette/section/?_id=/sports' -d '{"_id":"/sports", "_website": "mountainvillagegazette", "site": {"site_title": "Sports" }, "parent": { "default": "/" }}'
+curl -X PUT 'https://api.thepost.arcpublishing.com/site/v3/website/mountainvillagegazette/section/?_id=/sports' -d '{
+  "_id":"/sports",
+  "_website": "mountainvillagegazette",
+  "site": {"site_title": "Sports" },
+  "parent": { "default": "/" }
+}'
 
 {"_id":"/sports","_website":"mountainvillagegazette","site":{"site_title":"Sports"},"parent":{"default":"/"},"inactive":false}
 
-curl -X PUT 'https://api.thepost.arcpublishing.com/site/v3/website/mountainvillagegazette/section/?_id=/sports' -d '{"_id":"/sports", "_website": "mountainvillagegazette", "site": {"site_title": "Sports" }, "parent": { "default": "/" }}'
+curl -X PUT 'https://api.thepost.arcpublishing.com/site/v3/website/mountainvillagegazette/section/?_id=/sports' -d '{
+  "_id":"/sports",
+  "_website": "mountainvillagegazette",
+  "site": {"site_title": "Sports" },
+  "parent": { "default": "/" }
+}'
 
 {"_id":"/sports/the-mountain-goats","_website":"mountainvillagegazette","site":{"site_title":"The Mountain Goats"},"parent":{"default":"/sports"},"inactive":false}
 ```
