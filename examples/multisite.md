@@ -10,10 +10,14 @@ This document demonstrates how to take advantage of the new multi-site features 
 
 ## Goals
 
+This guide will show how to use the Arc APIs to:
+
 * Create distinct section taxonomies and navigation trees for each website.
-* Categorize a single document in multiple, different sections in different websites.
-* Publish any single document to any set of websites within an organization.
-* Assign a distinct URL for each website to a single document.
+* Categorize a single document in different sections in different websites.
+* Publish a single document to any set of websites within an organization.
+* Query the Content API within the context of a single website.
+* Assign a different URL for each website to a single document.
+* Create different URL formatting rules for each website.
 
 ## Prerequisites
 
@@ -36,6 +40,15 @@ This document demonstrates how to take advantage of the new multi-site features 
 ## Accessing the APIs
 
 See ["Accessing the APIs" in the Publishing a Document Example](https://github.com/washingtonpost/arc-api-documentation/blob/master/examples/publishing.md#accessing-the-apis). We'll make the same assumptions here.
+
+Note for several key Arc APIs, new API versions have been released. In order to use multisite features, you'll need to use the following API versions:
+
+* URL API: v2 or higher (released 2018.01)
+* Site API: v3 or higher (released 2017.10)
+* Content API: v4 or higher (release 2018.01)
+* Story API: users can continue using the v2 API
+
+For Content API, Story API and URL API endpoints that expect or return an ANS document, ANS 0.6.0 or higher is also required to use multisite features.
 
 ## Create distinct section taxonomies
 
@@ -221,7 +234,7 @@ Here's a story document that describes a recent croquet game between The Mountai
 Let's submit this as a draft to Story API.
 
 ```bash
-curl -X POST http://api.thepost.arcpublishing.com/story/v2/story/ --data @/path/to/river-turtles-defeat-mountain-goats.json
+curl -X PUT http://api.thepost.arcpublishing.com/story/v2/story/ABCDEFGHIJKLMNOPQRSTUVWXYZ --data @/path/to/river-turtles-defeat-mountain-goats.json
 
 {"_id":"ABCDEFGHIJKLMNOPQRSTUVWXYZ","type":"story","version":"0.6.0","content_elements":[{"_id":"2L565CADAZGXBCCJHRCZPA4L2A","type":"text","content":"In a surprise upset, The River Turtles of River City have defeated their long-time rivals, The Mountain Goats of Mountain Village, in a tightly-contested match lasting over five hours. The final score was 26-25."}],"created_date":"2018-01-18T22:15:10.044Z","revision":{"revision_id":"BCDEFGHIJKLMNOPQRSTUVWXYZA","branch":"default"},"last_updated_date":"2018-01-18T22:15:10.044Z","headlines":{"basic":"River Turtles Defeat Mountain Goats in Annual Croquet Match"},"owner":{"id":"thepost"},"display_date":"2018-01-18T12:00:00Z","credits":{"by":[{"type":"author","version":"0.6.0","name":"Brooks Robinson"}]},"websites":{"rivercitynews":{},"mountainvillagegazette":{}},"taxonomy":{"sections":[{"type":"reference","referent":{"type":"section","id":"/sports","website":"rivercitynews"}},{"type":"reference","referent":{"type":"section","id":"/news","website":"rivercitynews"}},{"type":"reference","referent":{"type":"section","id":"/sports","website":"mountainvillagegazette"}},{"type":"reference","referent":{"type":"section","id":"/sports/the-mountain-goats","website":"mountainvillagegazette"}}]},"additional_properties":{"has_published_copy":false},"canonical_website":"rivercitynews"}
 ```
@@ -243,4 +256,12 @@ curl -X PUT https://api.thepost.arcpublishing.com/story/v2/story/ABCDEFGHIJKLMNO
 
 ```
 
+## Query the Content API within a website
+
+TODO
+
+
+
 ## Assign a distinct URL for each website to a single document.
+
+TODO
