@@ -362,4 +362,125 @@ That means this query syntax can be used to create distinct landing pages for se
 
 ## Assign a distinct URL for each website to a single document.
 
-All of what we've done so far is nice, but it's nothing that couldn't be done before in Content API with clever taxonomical structures and naming schemas.
+All of what we've done so far is nice, but we haven't fully addressed how documents make it out onto the web.  If the same article appears in the News section in River City News and the section The Mountain Goats in The Mountain Village Gazette, shouldn't the urls for each website reflect that? And what is the impact on SEO?
+
+In ANS 0.5.8, the only url you had to populate to make your document appear on the web was the canonical url. In ANS 0.6.0, we've also added the ability to save distinct urls per website (called `website_url`) on a single document. Let's use `website_url` to save urls for The River City News and The Mountain Village Gazette on the document above.
+
+Our new document looks like this:
+
+```json
+{
+  "_id": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+  "type": "story",
+  "version": "0.6.0",
+
+  "revision": {
+    "revision_id": "BCDEFGHIJKLMNOPQRSTUVWXYZA"
+  },
+
+  "headlines": {
+    "basic": "River Turtles Defeat Mountain Goats in Annual Croquet Match"
+  },
+
+  "content_elements": [
+    {
+      "type": "text",
+      "content": "In a surprise upset, The River Turtles of River City have defeated their long-time rivals, The Mountain Goats of Mountain Village, in a tightly-contested match lasting over five hours. The final score was 26-25."
+    }
+  ],
+
+  "credits": {
+    "by": [
+      {
+        "type": "author",
+        "version": "0.6.0",
+        "name": "Brooks Robinson"
+      }
+    ]
+  },
+
+  "display_date": "2018-01-18T12:00:00Z",
+
+  "taxonomy": {
+    "sections": [
+      {
+        "type": "reference",
+        "referent": {
+          "type": "section",
+          "id": "/sports",
+          "website": "rivercitynews"
+        }
+      },
+      {
+        "type": "reference",
+        "referent": {
+          "type": "section",
+          "id": "/news",
+          "website": "rivercitynews"
+        }
+      },
+      {
+        "type": "reference",
+        "referent": {
+          "type": "section",
+          "id": "/sports",
+          "website": "mountainvillagegazette"
+        }
+      },
+      {
+        "type": "reference",
+        "referent": {
+          "type": "section",
+          "id": "/sports/the-mountain-goats",
+          "website": "mountainvillagegazette"
+        }
+      }
+    ]
+  },
+
+  "websites": {
+    "rivercitynews": {
+      "website_url": "/news/river-turtles-defeat-mountain-goats-croquet-match"
+    },
+    "mountainvillagegazette": {
+      "website_url": "/sports/the-mountain-goats/river-turtles-defeat-mountain-goats-croquet-match"
+    }
+  },
+
+  "canonical_website": "rivercitynews"
+}
+
+```
+
+
+This is the same document we've seen before, but with an updated websites field.
+
+* The River City News wants to publish the document to `/news/river-turtles-defeat-mountain-goats-croquet-match`.
+* The Mountain Village Gazette wants to publish the document to `/news/river-turtles-defeat-mountain-goats-croquet-match`.
+
+To save these urls in URL Service, we can post the document to one of the new URL endpoints:
+
+```bash
+curl -X POST 'https://api.thepost.arcpublishing.com/url/v2/url/allwebsiteurls' --data @/path/to/river-turtles-defeat-mountain-goats.json
+
+{"websites":{"mountainvillagegazette":{"url":"/sports/the-mountain-goats/river-turtles-defeat-mountain-goats-croquet-match","format":null},"rivercitynews":{"url":"/news/river-turtles-defeat-mountain-goats-croquet-match","format":null}}}
+
+```
+
+We can then re-publish the story:
+
+```bash
+curl -X PUT https://api.thepost.arcpublishing.com/story/v2/story/ABCDEFGHIJKLMNOPQRSTUVWXYZ/edition/default -d '{ "revision_id": "BCDEFGHIJKLMNOPQRSTUVWXYZA" }'
+
+{"_id":"ABCDEFGHIJKLMNOPQRSTUVWXYZ","type":"story","version":"0.6.0","content_elements":[{"_id":"2L565CADAZGXBCCJHRCZPA4L2A","type":"text","content":"In a surprise upset, The River Turtles of River City have defeated their long-time rivals, The Mountain Goats of Mountain Village, in a tightly-contested match lasting over five hours. The final score was 26-25."}],"created_date":"2018-01-18T22:15:10.044Z","revision":{"revision_id":"BCDEFGHIJKLMNOPQRSTUVWXYZA","branch":"default"},"last_updated_date":"2018-01-18T22:15:10.044Z","headlines":{"basic":"River Turtles Defeat Mountain Goats in Annual Croquet Match"},"owner":{"id":"thepost"},"display_date":"2018-01-18T12:00:00Z","credits":{"by":[{"type":"author","version":"0.6.0","name":"Brooks Robinson"}]},"websites":{"rivercitynews":{},"mountainvillagegazette":{}},"taxonomy":{"sections":[{"type":"reference","referent":{"type":"section","id":"/sports","website":"rivercitynews"}},{"type":"reference","referent":{"type":"section","id":"/news","website":"rivercitynews"}},{"type":"reference","referent":{"type":"section","id":"/sports","website":"mountainvillagegazette"}},{"type":"reference","referent":{"type":"section","id":"/sports/the-mountain-goats","website":"mountainvillagegazette"}}]},"additional_properties":{"has_published_copy":false},"canonical_website":"rivercitynews"}
+
+```
+
+Now, we can fetch the document by each site's respective url:
+
+```bash
+
+curl -X GET 'https://api.thepost.arcpublishing.com/content/v4/stories/?website=mountainvillagegazette&website_url=/sports/the-mountain-goats/river-turtles-defeat-mountain-goats-croquet-match'
+
+{"_id":"ABCDEFGHIJKLMNOPQRSTUVWXYZ","type":"story","version":"0.6.0","content_elements":[{"_id":"2L565CADAZGXBCCJHRCZPA4L2A","type":"text","content":"In a surprise upset, The River Turtles of River City have defeated their long-time rivals, The Mountain Goats of Mountain Village, in a tightly-contested match lasting over five hours. The final score was 26-25."}],"created_date":"2018-01-18T22:15:10.044Z","revision":{"revision_id":"BCDEFGHIJKLMNOPQRSTUVWXYZA","editions":["default"],"branch":"default","published":true},"last_updated_date":"2018-01-18T22:15:10.044Z","headlines":{"basic":"River Turtles Defeat Mountain Goats in Annual Croquet Match"},"owner":{"id":"thepost"},"display_date":"2018-01-18T22:34:28.023Z","credits":{"by":[{"type":"author","version":"0.6.0","name":"Brooks Robinson"}]},"first_publish_date":"2018-01-18T22:34:28.023Z","websites":{"rivercitynews":{"website_url":"/news/river-turtles-defeat-mountain-goats-croquet-match"},"mountainvillagegazette":{"website_url":"/sports/the-mountain-goats/river-turtles-defeat-mountain-goats-croquet-match"}},"taxonomy":{"sections":[{"_id":"/sports","_website":"rivercitynews","type":"section","version":"0.6.0","name":"Sports","path":"/sports","parent_id":"/","parent":{"default":"/"},"additional_properties":{"original":{"_id":"/sports","_website":"rivercitynews","site":{"site_title":"Sports"},"parent":{"default":"/"},"inactive":false}},"_website_section_id":"rivercitynews./sports"},{"_id":"/news","_website":"rivercitynews","type":"section","version":"0.6.0","name":"News","path":"/news","parent_id":"/","parent":{"default":"/"},"additional_properties":{"original":{"_id":"/news","_website":"rivercitynews","site":{"site_title":"News"},"parent":{"default":"/"},"inactive":false}},"_website_section_id":"rivercitynews./news"},{"_id":"/sports","_website":"mountainvillagegazette","type":"section","version":"0.6.0","name":"Sports","path":"/sports","parent_id":"/","parent":{"default":"/"},"additional_properties":{"original":{"_id":"/sports","_website":"mountainvillagegazette","site":{"site_title":"Sports"},"parent":{"default":"/"},"inactive":false}},"_website_section_id":"mountainvillagegazette./sports"},{"_id":"/sports/the-mountain-goats","_website":"mountainvillagegazette","type":"section","version":"0.6.0","name":"The Mountain Goats","path":"/sports/the-mountain-goats","parent_id":"/sports","parent":{"default":"/sports"},"additional_properties":{"original":{"_id":"/sports/the-mountain-goats","_website":"mountainvillagegazette","site":{"site_title":"The Mountain Goats"},"parent":{"default":"/sports"},"inactive":false}},"_website_section_id":"mountainvillagegazette./sports/the-mountain-goats"}]},"additional_properties":{"has_published_copy":false},"publish_date":"2018-01-19T21:55:33.666Z","canonical_website":"rivercitynews","canonical_url":"/news/river-turtles-defeat-mountain-goats-croquet-match-2","publishing":{"scheduled_operations":{"publish_edition":[],"unpublish_edition":[]}},"website":"mountainvillagegazette","website_url":"/sports/the-mountain-goats/river-turtles-defeat-mountain-goats-croquet-match"}
+```
