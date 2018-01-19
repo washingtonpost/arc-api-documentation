@@ -268,8 +268,7 @@ The key comes in the new website-specific query support. Here's an Elasticsearch
     "bool": {
       "must": [
         {
-          "term": {
-            "revison.published": 1
+          "term": { "revison.published": 1 }
         },
         {
           "nested": {
