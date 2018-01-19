@@ -258,10 +258,109 @@ curl -X PUT https://api.thepost.arcpublishing.com/story/v2/story/ABCDEFGHIJKLMNO
 
 ## Query the Content API within a website
 
-TODO
+Now the document can be fetched from Content API with two different values for the `website` query parameter. But it's the same data in both places. How does this help us build out two different websites?
 
+The key comes in the new website-specific query support. Here's an Elasticsearch query to retrieve all the *published* articles in the News section in The River City News:
+
+```json
+{
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "term": {
+            "revison.published": 1
+        },
+        {
+          "nested": {
+            "path": "taxonomy.sections",
+            "query": {
+              "bool": {
+                "must": [
+                  {
+                    "term": {
+                      "taxonomy.sections._id": "/news"
+                    }
+                  },
+                  {
+                    "term": {
+                      "taxonomy.sections._website": "rivercitynews"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+After minifying and URL-encoding this query, we can run it in the Content API like so:
+
+
+```bash
+curl -X GET https://api.thepost.arcpublishing.com/content/v4/search?website=rivercitynews&body=%7B%22query%22%3A%7B%22bool%22%3A%7B%22must%22%3A%5B%7B%22term%22%3A%7B%22revision.published%22%3A1%7D%7D%2C%7B%22nested%22%3A%7B%22path%22%3A%22taxonomy.sections%22%2C%22query%22%3A%7B%22bool%22%3A%7B%22must%22%3A%5B%7B%22term%22%3A%7B%22taxonomy.sections._id%22%3A%22%2Fnews%22%7D%7D%2C%7B%22term%22%3A%7B%22taxonomy.sections._website%22%3A%22rivercitynews%22%7D%7D%5D%7D%7D%7D%7D%5D%7D%7D%7D'
+
+{"type":"results","version":"0.6.0","content_elements":[{"type":"story","version":"0.6.0","content_elements":[{"_id":"2L565CADAZGXBCCJHRCZPA4L2A","type":"text","content":"In a surprise upset, The River Turtles of River City have defeated their long-time rivals, The Mountain Goats of Mountain Village, in a tightly-contested match lasting over five hours. The final score was 26-25."}],"created_date":"2018-01-18T22:15:10.044Z","revision":{"revision_id":"BCDEFGHIJKLMNOPQRSTUVWXYZA","editions":["default"],"branch":"default","published":true},"last_updated_date":"2018-01-18T22:15:10.044Z","headlines":{"basic":"River Turtles Defeat Mountain Goats in Annual Croquet Match"},"owner":{"id":"thepost"},"display_date":"2018-01-18T22:34:28.023Z","credits":{"by":[{"type":"author","version":"0.6.0","name":"Brooks Robinson"}]},"first_publish_date":"2018-01-18T22:34:28.023Z","websites":{"rivercitynews":{},"mountainvillagegazette":{}},"taxonomy":{"sections":[{"_id":"/sports","_website":"rivercitynews","type":"section","version":"0.6.0","name":"Sports","path":"/sports","parent_id":"/","parent":{"default":"/"},"additional_properties":{"original":{"_id":"/sports","_website":"rivercitynews","site":{"site_title":"Sports"},"parent":{"default":"/"},"inactive":false}},"_website_section_id":"rivercitynews./sports"},{"_id":"/news","_website":"rivercitynews","type":"section","version":"0.6.0","name":"News","path":"/news","parent_id":"/","parent":{"default":"/"},"additional_properties":{"original":{"_id":"/news","_website":"rivercitynews","site":{"site_title":"News"},"parent":{"default":"/"},"inactive":false}},"_website_section_id":"rivercitynews./news"},{"_id":"/sports","_website":"mountainvillagegazette","type":"section","version":"0.6.0","name":"Sports","path":"/sports","parent_id":"/","parent":{"default":"/"},"additional_properties":{"original":{"_id":"/sports","_website":"mountainvillagegazette","site":{"site_title":"Sports"},"parent":{"default":"/"},"inactive":false}},"_website_section_id":"mountainvillagegazette./sports"},{"_id":"/sports/the-mountain-goats","_website":"mountainvillagegazette","type":"section","version":"0.6.0","name":"The Mountain Goats","path":"/sports/the-mountain-goats","parent_id":"/sports","parent":{"default":"/sports"},"additional_properties":{"original":{"_id":"/sports/the-mountain-goats","_website":"mountainvillagegazette","site":{"site_title":"The Mountain Goats"},"parent":{"default":"/sports"},"inactive":false}},"_website_section_id":"mountainvillagegazette./sports/the-mountain-goats"}]},"additional_properties":{"has_published_copy":false},"publish_date":"2018-01-19T19:31:08.910Z","canonical_website":"rivercitynews","_website_ids":["rivercitynews","mountainvillagegazette"],"publishing":{"scheduled_operations":{"publish_edition":[],"unpublish_edition":[]}},"_id":"ABCDEFGHIJKLMNOPQRSTUVWXYZ"}],"additional_properties":{"took":2,"timed_out":false},"count":1}
+```
+
+As expected, the Content API returned the article.
+
+But, what if we change the query to search for articles in News section from The Mountain Village Gazette? The updated query would be:
+
+```json
+{
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "term": { "revision.published": 1 }
+        },
+        {
+          "nested": {
+            "path": "taxonomy.sections",
+            "query": {
+              "bool": {
+                "must": [
+                  {
+                    "term": {
+                      "taxonomy.sections._id": "/news"
+                    }
+                  },
+                  {
+                    "term": {
+                      "taxonomy.sections._website": "themountainvillagegazette"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+...and the corresponding Content API call would be...
+
+
+```bash
+curl -X https://api.thepost.arcpublishing.com/content/v4/search?website=mountainvillagegazette&body=%7B%22query%22%3A%7B%22bool%22%3A%7B%22must%22%3A%5B%7B%22term%22%3A%7B%22revision.published%22%3A1%7D%7D%2C%7B%22nested%22%3A%7B%22path%22%3A%22taxonomy.sections%22%2C%22query%22%3A%7B%22bool%22%3A%7B%22must%22%3A%5B%7B%22term%22%3A%7B%22taxonomy.sections._id%22%3A%22%2Fnews%22%7D%7D%2C%7B%22term%22%3A%7B%22taxonomy.sections._website%22%3A%22mountainvillagegazette%22%7D%7D%5D%7D%7D%7D%7D%5D%7D%7D%7D'
+
+{"type":"results","version":"0.6.0","content_elements":[],"additional_properties":{"took":5,"timed_out":false},"count":0}
+
+```
+
+So the story does *not* appear in queries for the News section in The Mountain Village Gazette.
+
+That means this query syntax can be used to create distinct landing pages for sections with the same name across multiple different websites, all while pulling in the same content!
 
 
 ## Assign a distinct URL for each website to a single document.
 
-TODO
+All of what we've done so far is nice, but it's nothing that couldn't be done before in Content API with clever taxonomical structures and naming schemas.

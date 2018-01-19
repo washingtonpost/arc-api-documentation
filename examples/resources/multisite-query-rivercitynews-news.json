@@ -1,0 +1,32 @@
+{
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "term": { "revision.published": 1 }
+        },
+        {
+          "nested": {
+            "path": "taxonomy.sections",
+            "query": {
+              "bool": {
+                "must": [
+                  {
+                    "term": {
+                      "taxonomy.sections._id": "/news"
+                    }
+                  },
+                  {
+                    "term": {
+                      "taxonomy.sections._website": "rivercitynews"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
