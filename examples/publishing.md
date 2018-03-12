@@ -1184,3 +1184,4 @@ The complete list of reference documentation for the APIs used in this document:
 * [Image API / Anglerfish](https://arcpublishing.atlassian.net/wiki/spaces/ANG/pages/13338195/Anglerfish+API)
 * [Video API / Goldfish](https://arcpublishing.atlassian.net/wiki/spaces/GOL/pages/67895547/Video+API)
 * [URL API](https://arcpublishing.atlassian.net/wiki/spaces/CA/pages/13338275/Url+Service)
+* [Tags API](https://arcpublishing.atlassian.net/wiki/spaces/CA/pages/39157816/Tags+API)
